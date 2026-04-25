@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # valhalla-framework
 =======
 # Valhalla
