@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./assets/valhalla-logo.png" alt="Valhalla Logo" width="260">
+</p>
+
 # Valhalla
 
 Valhalla is a microservices-first PHP framework for building lightweight JSON APIs, internal service endpoints, CLI-driven workflows, and local agent-style workers.
