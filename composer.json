@@ -1,0 +1,34 @@
+{
+    "name": "valhalla/framework",
+    "description": "Microservices-only PHP framework for lightweight API services.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "guzzlehttp/guzzle": "^7.9",
+        "monolog/monolog": "^3.6"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Valhalla\\Framework\\": "src/",
+            "App\\": "examples/basic-service/src/"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Valhalla\\Framework\\Tests\\": "tests/"
+        }
+    },
+    "bin": [
+        "bin/valhalla"
+    ],
+    "scripts": {
+        "test": "phpunit --colors=always"
+    }
+}
