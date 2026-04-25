@@ -5,7 +5,10 @@ declare(strict_types=1);
 
 use Valhalla\Framework\CLI\Application;
 
-require dirname(__DIR__) . '/vendor/autoload.php';
+// Composer's bin proxy provides this when the package is installed globally.
+$autoload = $_composer_autoload_path ?? dirname(__DIR__) . '/vendor/autoload.php';
+
+require $autoload;
 
 $app = new Application(dirname(__DIR__));
 exit($app->run($argv));
