@@ -146,7 +146,7 @@ PHP;
     "type": "project",
     "require": {
         "php": "^8.2",
-        "valhalla/framework": "*"
+        "asyassin10/valhalla-framework": "^1.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^11.5"
