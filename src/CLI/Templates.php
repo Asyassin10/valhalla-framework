@@ -302,7 +302,23 @@ MD;
     public static function addGitIgnore(): string
     {
         return <<<'PHP'
-       /vendor/
+    *.log
+    .env
+    .env.backup
+    .env.production
+    .phpactor.json
+    .phpunit.result.cache
+    /.codex
+    /.cursor/
+    /.idea
+    /.nova
+    /.phpunit.cache
+    /.vscode
+    /.zed
+    /public/storage
+    /storage/*.key
+    /storage/pail
+    /vendor
     PHP;
     }
 }
