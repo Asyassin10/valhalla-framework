@@ -299,4 +299,10 @@ composer test
 ```
 MD;
     }
+    public static function addGitIgnore(): string
+    {
+        return <<<'PHP'
+       /vendor/
+    PHP;
+    }
 }
