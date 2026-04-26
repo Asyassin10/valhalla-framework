@@ -9,6 +9,7 @@ use Valhalla\Framework\CLI\Console;
 use Valhalla\Framework\CLI\Context;
 use Valhalla\Framework\CLI\Templates;
 
+
 final class NewProjectCommand implements Command
 {
     private const DIRECTORIES = [
@@ -36,7 +37,7 @@ final class NewProjectCommand implements Command
     public function handle(array $arguments, Console $console, Context $context): int
     {
         $installDependencies = in_array('--install', $arguments, true);
-        $arguments = array_values(array_filter($arguments, static fn (string $argument): bool => $argument !== '--install'));
+        $arguments = array_values(array_filter($arguments, static fn(string $argument): bool => $argument !== '--install'));
         $name = $arguments[0] ?? 'valhalla-service';
         $target = $this->targetPath($context->workingPath(), $name);
 
@@ -59,6 +60,7 @@ final class NewProjectCommand implements Command
         file_put_contents($target . '/config/services.php', Templates::projectServicesConfig());
         file_put_contents($target . '/config/logging.php', Templates::projectLoggingConfig());
         file_put_contents($target . '/config/agents.php', Templates::projectAgentsConfig());
+        file_put_contents($target . '/.gitignore', Templates::addGitIgnore());
         file_put_contents($target . '/phpunit.xml', <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit bootstrap="vendor/autoload.php" colors="true">
