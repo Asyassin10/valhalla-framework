@@ -11,19 +11,18 @@ use Valhalla\Framework\Support\Logger;
 final class ErrorHandler
 {
     public function __construct(
-        private readonly Logger $logger,
+        //private readonly Logger $logger,
         private readonly bool $debug = false
-    ) {
-    }
+    ) {}
 
     public function render(Throwable $throwable): Response
     {
         $status = $throwable instanceof HttpException ? $throwable->statusCode() : 500;
 
-        $this->logger->error($throwable->getMessage(), [
+        /*   $this->logger->error($throwable->getMessage(), [
             'exception' => $throwable::class,
             'trace' => $this->debug ? $throwable->getTraceAsString() : null,
-        ]);
+        ]); */
 
         $payload = [
             'error' => [

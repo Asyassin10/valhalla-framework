@@ -4,21 +4,47 @@ declare(strict_types=1);
 
 namespace Valhalla\Framework\Core;
 
-final class Container
-{
-    private array $instances = [];
+use Exception;
 
-    public function singleton(string $id, object $instance): void
+class Container
+{
+    protected array $bindings = [];
+    protected array $instances = [];
+
+    public function bind(string $key, callable $resolver): void
     {
-        $this->instances[$id] = $instance;
+        $this->bindings[$key] = [
+            'resolver' => $resolver,
+            'singleton' => false,
+        ];
     }
 
-    public function get(string $id): object
+    public function singleton(string $key, callable $resolver): void
     {
-        if (!array_key_exists($id, $this->instances)) {
-            $this->instances[$id] = new $id();
+        $this->bindings[$key] = [
+            'resolver' => $resolver,
+            'singleton' => true,
+        ];
+    }
+
+    public function make(string $key)
+    {
+        if (isset($this->instances[$key])) {
+            return $this->instances[$key];
         }
 
-        return $this->instances[$id];
+        if (! isset($this->bindings[$key])) {
+            throw new Exception("Service {$key} not found.");
+        }
+
+        $binding = $this->bindings[$key];
+
+        $object = $binding['resolver']($this);
+
+        if ($binding['singleton']) {
+            $this->instances[$key] = $object;
+        }
+
+        return $object;
     }
 }
