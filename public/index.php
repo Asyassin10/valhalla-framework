@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Valhalla\Framework\Core\Application;
+use Valhalla\Framework\Core\Providers\LoggingServiceProvider;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
