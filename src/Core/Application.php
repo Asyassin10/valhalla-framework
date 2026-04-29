@@ -18,10 +18,33 @@ final class Application extends Container
     private Router $router;
     private ErrorHandler $errors;
     private array $providers = [];
+    private ExceptionPipeline $pipeline;
 
     public function __construct(private readonly string $basePath)
     {
         ob_start();
+        try {
+            $this->safeBoot($basePath);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            header('Content-Type: application/json');
+            ob_clean();
+            echo json_encode([
+                'error' => [
+                    'message' => $e->getMessage(). "sdcsdsdcsdc",
+                    'type'    => $e::class,
+                       'file'    => $e->getFile(),
+    'line'    => $e->getLine(),
+    'trace'   => $e->getTrace(),
+                ],
+            ]);
+            exit;
+        }
+    }
+
+    private function safeBoot(string $basePath): void
+    {
+        $this->pipeline = new ExceptionPipeline();
         Facade::setApplication($this);
 
         Paths::setBasePath($basePath);
@@ -32,23 +55,59 @@ final class Application extends Container
 
         $this->bootstrapLogger();
 
-      
-
         $this->router = new Router();
         $this->errors = new ErrorHandler(
             $this->make('logger'),
             (bool) env('APP_DEBUG', false)
         );
 
+        $this->pipeline->add(function (Throwable $e): void {
+            $this->make('logger')->logError($e);
+        });
+        $this->pipeline->add(function (Throwable $e): void {
+            ob_clean();
+            $this->errors->render($e)->send();
+            exit;
+        });
+
+        $this->registerErrorHandling();
+
         Auth::setManager(new AuthManager($this->config));
     }
 
-    /**
-     * Bind the logger as a singleton into the container.
-     *
-     * Logging is core infrastructure — it must always be available,
-     * unconditionally, before any user-land code runs.
-     */
+    private function registerErrorHandling(): void
+    {
+        error_reporting(E_ALL);
+        ini_set('display_errors', '0');
+        ini_set('log_errors', '1');
+
+        set_error_handler(function (int $severity, string $message, string $file, int $line): bool {
+            throw new \ErrorException($message, 0, $severity, $file, $line);
+        });
+
+        set_exception_handler(function (Throwable $e): void {
+            $this->pipeline->handle($e);
+        });
+
+        register_shutdown_function(function (): void {
+            $error = error_get_last();
+
+            if (!$error || !in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR], true)) {
+                return;
+            }
+
+            $e = new \ErrorException(
+                $error['message'],
+                0,
+                $error['type'],
+                $error['file'],
+                $error['line']
+            );
+
+            $this->pipeline->handle($e);
+        });
+    }
+
     private function bootstrapLogger(): void
     {
         $this->singleton('logger', function (): Logger {
@@ -58,9 +117,6 @@ final class Application extends Container
         });
     }
 
-    /**
-     * Register a user-land service provider.
-     */
     public function register(string $providerClass): void
     {
         $provider = new $providerClass($this);

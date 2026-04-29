@@ -43,6 +43,7 @@ class Logger
     protected array $channels;
     protected string $path;
     protected LogChannel $channel;
+    protected LogChannel $ErrorChannel;
     protected string $level;
     protected string $driver;
     protected int $days;
@@ -111,6 +112,7 @@ class Logger
 
         $this->path = $config['path'] ?? storage_path('logs');
         $this->channel = new LogChannel(self::DEFAULT_CHANNEL_NAME, ["driver" => "single"]);
+        $this->ErrorChannel = new LogChannel(self::DEFAULT_CHANNEL_NAME, ["driver" => "single"]);
         $this->buildChannels($config);
     }
     public function channel(string $channel)
@@ -173,15 +175,15 @@ class Logger
         ], $context);
         $message = $exception->getMessage();
 
-        $this->write('EMERGENCY', $message, $context);
+        $this->write('EMERGENCY', $message, $context,true);
     }
 
-    protected function normalize(string $level, mixed $message, array $context): array
+    protected function normalize(string $level, mixed $message, array $context, bool $isError): array
     {
         return [
             'timestamp' => date('c'),
             'level'     => $level,
-            'channel'   => $this->channel->getName(),
+            'channel'   => $isError == false ? $this->channel->getName():$this->ErrorChannel->getName(),
             'message'   => $this->normalizeValue($message),
             'context'   => $this->normalizeValue($context),
         ];
@@ -297,19 +299,20 @@ class Logger
     protected function write(
         string $level,
         mixed $message,
-        array $context = []
+        array $context = [],
+        bool $isError = false
     ): void {
         $this->rotateLogs();
         $log_level = $this->getProcessedLogLevel($level);
-        $record = $this->normalize($log_level, $message, $context);
+        $record = $this->normalize($log_level, $message, $context,$isError);
         $formatted = $this->format($record);
-        $file = $this->getLogFile();
+        $file = $this->getLogFile($isError);
         if (!is_dir(dirname($file))) {
             mkdir(dirname($file), 0755, recursive: true);
         }
 
         file_put_contents(
-            $this->getLogFile(),
+            $this->getLogFile($isError),
             $formatted,
             FILE_APPEND | LOCK_EX
         );
@@ -346,10 +349,17 @@ class Logger
 
         return "[{$date}] {$channel}.{$level}: {$message}" . PHP_EOL;
     }
-    protected function getLogFile(): string
+    protected function getLogFile(bool $IsError): string
     {
-        $channel = $this->isMainChannel() ? self::DEFAULT_CHANNEL_NAME : $this->channel->getName();
-        if ($this->driver == "daily") {
+if ($this->isMainChannel()) {
+    $channel = self::DEFAULT_CHANNEL_NAME;
+} elseif ($IsError) {
+    $channel = $this->ErrorChannel->getName();
+} else {
+    $channel = $this->channel->getName();
+}
+
+if ($this->driver == "daily") {
             return $this->path . '/' . $channel . "-" . date('Y-m-d') . '.log';
         }
 

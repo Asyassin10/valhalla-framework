@@ -21,7 +21,7 @@ class LogChannel
     public function __construct(string $name, array $config = [])
     {
         $driver = $config['driver'] ?? null;
-        $level = $config['level'] ?? "info";
+        $level = $config['level'] ?? "INFO";
         $days = $config['days'] ?? 60;
         $path = $config['path'] ?? storage_path('logs/valhala.log');
 
