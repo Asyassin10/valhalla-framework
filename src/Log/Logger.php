@@ -3,17 +3,126 @@
 
 namespace Valhalla\Framework\Log;
 
+use InvalidArgumentException;
+
 class Logger
 {
-    protected string $path;
-    protected string $channel;
-    protected bool $daily;
+    // Defaults
+    private const DEFAULT_CHANNEL_NAME = 'app';
+    private const DEFAULT_ROTATION_DAYS = 60;
+    private const  LEVELS = [
+        'debug' => 100,
+        'info' => 200,
+        'notice' => 250,
+        'warning' => 300,
+        'error' => 400,
+        'critical' => 500,
+        'alert' => 550,
+        'emergency' => 600,
+    ];
+    protected array $drivers = [
+        "stack",
+        "single",
+        "daily"
+    ];
 
+    protected array $levels = [
+        "debug",
+        "info",
+        "notice",
+        "warning",
+        "error",
+        "critical",
+        "alert",
+        "emergency",
+    ];
+    /**
+     * @var array<string, LogChannel>
+     */
+    protected array $channels;
+    protected string $path;
+    protected LogChannel $channel;
+    protected string $level;
+    protected string $driver;
+    protected int $days;
+
+    private function shouldLog(string $messageLevel, string $channelLevel): bool
+    {
+        return self::LEVELS[$messageLevel] >= self::LEVELS[$channelLevel];
+    }
+    private function getProcessedLogLevel(string $messageLevel): string
+    {
+        if ($this->isMainChannel()) {
+            return $messageLevel;
+        }
+        $channelLevel = $this->channel->getLevel();
+
+        return $this->shouldLog($messageLevel, $channelLevel)
+            ? $messageLevel
+            : $channelLevel;
+    }
+    private function isMainChannel(): bool
+    {
+        return $this->channel->getName() === self::DEFAULT_CHANNEL_NAME;
+    }
+    private function buildChannels(array $config = [])
+    {
+        if (
+            isset($config['channels']) &&
+            is_array($config['channels']) &&
+            !empty($config['channels']) &&
+            array_keys($config['channels']) !== range(0, count($config['channels']) - 1)
+        ) {
+            foreach ($config['channels'] as $name => $channelConfig) {
+                $this->channels[$name] = new LogChannel($name, $channelConfig);
+            }
+        }
+    }
     public function __construct(array $config = [])
     {
+        // Get Driver
+        $driver = $config['driver'] ?? null;
+        if ($driver === null) {
+            throw new InvalidArgumentException('Driver is required.');
+        }
+
+        if (!in_array($driver, $this->drivers, true)) {
+            throw new InvalidArgumentException(
+                "Driver [$driver] is not supported."
+            );
+        }
+        $this->driver = $driver;
+
+        // Get level
+        $level = $config['level'] ?? null;
+        if ($level === null) {
+            throw new InvalidArgumentException('Level is required.');
+        }
+        if (!in_array($level, $this->levels, true)) {
+            throw new InvalidArgumentException(
+                "Level [$level] is not supported."
+            );
+        }
+        $this->level = $level;
+        $this->days = self::DEFAULT_ROTATION_DAYS;
+
+
+
         $this->path = $config['path'] ?? storage_path('logs');
-        $this->channel = $config['channel'] ?? 'app';
-        $this->daily = $config['daily'] ?? false;
+        $this->channel = new LogChannel(self::DEFAULT_CHANNEL_NAME, ["driver" => "single"]);
+        $this->buildChannels($config);
+    }
+    public function channel(string $channel)
+    {
+        if (!isset($this->channels[$channel])) {
+            throw new InvalidArgumentException(
+                "Log channel [$channel] does not exist."
+            );
+        }
+
+        $this->channel = $this->channels[$channel];
+        $this->driver = $this->channels[$channel]->getDriver();
+        return $this;
     }
 
     public function info(mixed $message, array $context = []): void
@@ -35,16 +144,29 @@ class Logger
     {
         $this->write('DEBUG', $message, $context);
     }
-    public function level(string $level, mixed $message, array $context = []): void
+    public function notice(mixed $message, array $context = []): void
     {
-        $this->write($level, $message, $context);
+        $this->write('NOTICE', $message, $context);
     }
+    public function critical(mixed $message, array $context = []): void
+    {
+        $this->write('CRITICAL', $message, $context);
+    }
+    public function alert(mixed $message, array $context = []): void
+    {
+        $this->write('ALERT', $message, $context);
+    }
+    public function emergency(mixed $message, array $context = []): void
+    {
+        $this->write('EMERGENCY', $message, $context);
+    }
+
     protected function normalize(string $level, mixed $message, array $context): array
     {
         return [
             'timestamp' => date('c'),
             'level'     => $level,
-            'channel'   => $this->channel,
+            'channel'   => $this->channel->getName(),
             'message'   => $this->normalizeValue($message),
             'context'   => $this->normalizeValue($context),
         ];
@@ -122,14 +244,49 @@ class Logger
 
         return $data;
     }
+    protected function rotateLogs(): void
+    {
+        $driver = $this->isMainChannel()
+            ? $this->driver
+            : $this->channel->getDriver();
 
+        $path = $this->isMainChannel()
+            ? $this->path
+            : $this->channel->getPath();
+
+        $days = $this->isMainChannel()
+            ? $this->days
+            : $this->channel->getDays();
+
+
+        if ($driver !== 'daily') {
+            return;
+        }
+
+        $files = glob($path . '/*.log');
+
+        if (!$files) {
+            return;
+        }
+
+        $threshold = time() - ($days * 86400);
+
+        foreach ($files as $file) {
+            $modifiedTime = filemtime($file);
+
+            if ($modifiedTime !== false && $modifiedTime < $threshold) {
+                @unlink($file);
+            }
+        }
+    }
     protected function write(
         string $level,
         mixed $message,
         array $context = []
     ): void {
-        $record = $this->normalize($level, $message, $context);
-
+        $this->rotateLogs();
+        $log_level = $this->getProcessedLogLevel($level);
+        $record = $this->normalize($log_level, $message, $context);
         $formatted = $this->format($record);
         $file = $this->getLogFile();
         if (!is_dir(dirname($file))) {
@@ -139,7 +296,7 @@ class Logger
         file_put_contents(
             $this->getLogFile(),
             $formatted,
-            FILE_APPEND
+            FILE_APPEND | LOCK_EX
         );
     }
 
@@ -176,10 +333,11 @@ class Logger
     }
     protected function getLogFile(): string
     {
-        if ($this->daily) {
-            return $this->path . '/' . date('Y-m-d') . '.log';
+        $channel = $this->isMainChannel() ? self::DEFAULT_CHANNEL_NAME : $this->channel->getName();
+        if ($this->driver == "daily") {
+            return $this->path . '/' . $channel . "-" . date('Y-m-d') . '.log';
         }
 
-        return $this->path . '/' . $this->channel . '.log';
+        return $this->path . '/' . $channel . '.log';
     }
 }
