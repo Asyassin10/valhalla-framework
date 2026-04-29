@@ -4,22 +4,23 @@
 namespace Valhalla\Framework\Log;
 
 use InvalidArgumentException;
+use Throwable;
 
 class Logger
 {
     // Defaults
     private const DEFAULT_CHANNEL_NAME = 'app';
     private const DEFAULT_ROTATION_DAYS = 60;
-    private const  LEVELS = [
-        'debug' => 100,
-        'info' => 200,
-        'notice' => 250,
-        'warning' => 300,
-        'error' => 400,
-        'critical' => 500,
-        'alert' => 550,
-        'emergency' => 600,
-    ];
+  private const LEVELS = [
+    'DEBUG' => 100,
+    'INFO' => 200,
+    'NOTICE' => 250,
+    'WARNING' => 300,
+    'ERROR' => 400,
+    'CRITICAL' => 500,
+    'ALERT' => 550,
+    'EMERGENCY' => 600,
+];
     protected array $drivers = [
         "stack",
         "single",
@@ -27,14 +28,14 @@ class Logger
     ];
 
     protected array $levels = [
-        "debug",
-        "info",
-        "notice",
-        "warning",
-        "error",
-        "critical",
-        "alert",
-        "emergency",
+        "DEBUG",
+        "INFO",
+        "NOTICE",
+        "WARNING",
+        "ERROR",
+        "CRITICAL",
+        "ALERT",
+        "EMERGENCY",
     ];
     /**
      * @var array<string, LogChannel>
@@ -158,6 +159,20 @@ class Logger
     }
     public function emergency(mixed $message, array $context = []): void
     {
+        $this->write('EMERGENCY', $message, $context);
+    }
+    public function logError(Throwable $exception, array $context = []): void
+    {
+
+        $context = array_merge([
+            'exception' => $exception::class,
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine(),
+            'code' => $exception->getCode(),
+            'trace' => $exception->getTraceAsString(),
+        ], $context);
+        $message = $exception->getMessage();
+
         $this->write('EMERGENCY', $message, $context);
     }
 

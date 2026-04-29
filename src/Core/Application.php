@@ -21,6 +21,7 @@ final class Application extends Container
 
     public function __construct(private readonly string $basePath)
     {
+        ob_start();
         Facade::setApplication($this);
 
         Paths::setBasePath($basePath);
@@ -31,8 +32,13 @@ final class Application extends Container
 
         $this->bootstrapLogger();
 
+      
+
         $this->router = new Router();
-        $this->errors = new ErrorHandler((bool) env('APP_DEBUG', false));
+        $this->errors = new ErrorHandler(
+            $this->make('logger'),
+            (bool) env('APP_DEBUG', false)
+        );
 
         Auth::setManager(new AuthManager($this->config));
     }
