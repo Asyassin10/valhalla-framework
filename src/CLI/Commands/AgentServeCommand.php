@@ -29,7 +29,8 @@ final class AgentServeCommand implements Command
         $host = (string) $context->config()->get('agents.default_host', '127.0.0.1');
 
         $console->line(sprintf('Serving agent [%s] on %s:%d', $name, $host, $port));
-        (new AgentServer($host, $port, new EchoAgentHandler()))->run();
+        (new AgentServer($host, $port, new EchoAgentHandler))->run();
+
         return 0;
     }
 }

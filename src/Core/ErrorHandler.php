@@ -15,21 +15,21 @@ final class ErrorHandler
         private readonly bool $debug = false
     ) {}
 
-   public function render(Throwable $throwable): Response
-{
-    $status = $throwable instanceof HttpException ? $throwable->statusCode() : 500;
-    $this->logger->logError($throwable);
-    $payload = [
-        'error' => [
-            'message' => $throwable->getMessage(),
-            'type' => $throwable::class,
-        ],
-    ];
+    public function render(Throwable $throwable): Response
+    {
+        $status = $throwable instanceof HttpException ? $throwable->statusCode() : 500;
+        $this->logger->logError($throwable);
+        $payload = [
+            'error' => [
+                'message' => $throwable->getMessage(),
+                'type' => $throwable::class,
+            ],
+        ];
 
-    if ($this->debug) {
-        $payload['error']['trace'] = explode(PHP_EOL, $throwable->getTraceAsString());
+        if ($this->debug) {
+            $payload['error']['trace'] = explode(PHP_EOL, $throwable->getTraceAsString());
+        }
+
+        return Response::json($payload, $status);
     }
-
-    return Response::json($payload, $status);
-}
 }

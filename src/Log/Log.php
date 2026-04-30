@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Valhalla\Framework\Log;
 
 use Valhalla\Framework\Core\Facade;

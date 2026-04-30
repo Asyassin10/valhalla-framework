@@ -11,8 +11,7 @@ final class CircuitBreaker
     public function __construct(
         private readonly int $threshold = 3,
         private readonly int $cooldown = 10
-    ) {
-    }
+    ) {}
 
     public function canPass(string $service): bool
     {
@@ -24,6 +23,7 @@ final class CircuitBreaker
 
         if ((time() - $entry['opened_at']) >= $this->cooldown) {
             $this->reset($service);
+
             return true;
         }
 

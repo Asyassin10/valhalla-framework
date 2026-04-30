@@ -11,6 +11,5 @@ final class RouteDefinition
         public readonly string $uri,
         public readonly mixed $handler,
         public readonly array $middleware = []
-    ) {
-    }
+    ) {}
 }

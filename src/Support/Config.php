@@ -8,19 +8,17 @@ final class Config
 {
     private array $items = [];
 
-    public function __construct(private readonly string $basePath)
-    {
-    }
+    public function __construct(private readonly string $basePath) {}
 
     public function load(string $directory = 'config'): void
     {
-        $configPath = rtrim($this->basePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . trim($directory, DIRECTORY_SEPARATOR);
+        $configPath = rtrim($this->basePath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.trim($directory, DIRECTORY_SEPARATOR);
 
-        if (!is_dir($configPath)) {
+        if (! is_dir($configPath)) {
             return;
         }
 
-        foreach (glob($configPath . DIRECTORY_SEPARATOR . '*.php') ?: [] as $file) {
+        foreach (glob($configPath.DIRECTORY_SEPARATOR.'*.php') ?: [] as $file) {
             $name = basename($file, '.php');
             $this->items[$name] = require $file;
         }
@@ -37,7 +35,7 @@ final class Config
         $value = $this->items;
 
         foreach ($segments as $segment) {
-            if (!is_array($value) || !array_key_exists($segment, $value)) {
+            if (! is_array($value) || ! array_key_exists($segment, $value)) {
                 return $default;
             }
 

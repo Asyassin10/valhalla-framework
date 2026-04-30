@@ -24,11 +24,12 @@ final class MakeServiceCommand implements Command
     public function handle(array $arguments, Console $console, Context $context): int
     {
         $name = $arguments[0] ?? 'GeneratedService';
-        $class = str_ends_with($name, 'Service') ? $name : $name . 'Service';
-        $path = $context->workingPath() . '/src/Services/' . $class . '.php';
+        $class = str_ends_with($name, 'Service') ? $name : $name.'Service';
+        $path = $context->workingPath().'/src/Services/'.$class.'.php';
         @mkdir(dirname($path), 0777, true);
         file_put_contents($path, Templates::service('App\Services', $class));
         $console->line(sprintf('Service created: %s', $path));
+
         return 0;
     }
 }

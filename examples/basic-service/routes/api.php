@@ -7,7 +7,7 @@ use Valhalla\Framework\Auth\Auth;
 use Valhalla\Framework\Core\Response;
 use Valhalla\Framework\Middleware\AuthMiddleware;
 
-$router->get('/health', new HealthController());
+$router->get('/health', new HealthController);
 $router->get('/token', fn () => Response::json([
     'token' => Auth::generateToken(['id' => 11, 'name' => 'Basic Service']),
 ]));

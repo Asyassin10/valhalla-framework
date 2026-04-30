@@ -31,6 +31,7 @@ final class AuthGenerateCommand implements Command
         ];
 
         $console->line(Auth::generateToken($user));
+
         return 0;
     }
 }

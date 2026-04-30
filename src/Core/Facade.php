@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Valhalla\Framework\Core;
 
 abstract class Facade

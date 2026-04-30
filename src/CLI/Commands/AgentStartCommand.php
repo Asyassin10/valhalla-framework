@@ -27,6 +27,7 @@ final class AgentStartCommand implements Command
 
         if ($name === null) {
             $console->error('Usage: valhalla agent:start NAME');
+
             return 1;
         }
 
@@ -35,12 +36,13 @@ final class AgentStartCommand implements Command
 
         if ($agent === null) {
             $console->error(sprintf('Agent [%s] is not installed.', $name));
+
             return 1;
         }
 
         $pidDir = (string) $context->config()->get('agents.pid_dir');
         @mkdir($pidDir, 0777, true);
-        $log = storage_path('logs/' . $name . '.log');
+        $log = storage_path('logs/'.$name.'.log');
         @mkdir(dirname($log), 0777, true);
 
         $command = sprintf(
@@ -53,9 +55,10 @@ final class AgentStartCommand implements Command
         );
 
         $pid = trim((string) shell_exec($command));
-        file_put_contents($pidDir . DIRECTORY_SEPARATOR . $name . '.pid', $pid);
+        file_put_contents($pidDir.DIRECTORY_SEPARATOR.$name.'.pid', $pid);
 
         $console->line(sprintf('Agent [%s] started with PID %s', $name, $pid));
+
         return 0;
     }
 }

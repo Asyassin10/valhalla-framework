@@ -10,8 +10,7 @@ final class Response
         private readonly mixed $data,
         private readonly int $status = 200,
         private readonly array $headers = ['Content-Type' => 'application/json']
-    ) {
-    }
+    ) {}
 
     public static function json(mixed $data, int $status = 200, array $headers = []): self
     {

@@ -52,7 +52,7 @@ final class Router
             $groupMiddleware = array_merge($groupMiddleware, $group['middleware']);
         }
 
-        $uri = '/' . trim($prefix . '/' . trim($uri, '/'), '/');
+        $uri = '/'.trim($prefix.'/'.trim($uri, '/'), '/');
         $route = new RouteDefinition(strtoupper($method), $uri === '//' ? '/' : $uri, $handler, array_merge($groupMiddleware, $middleware));
         $this->routes[] = $route;
 
@@ -77,10 +77,12 @@ final class Router
 
             if ($route->method !== $request->method()) {
                 $allowed[] = $route->method;
+
                 continue;
             }
 
             $request->setRouteParams($match);
+
             return $this->runRoute($route, $request);
         }
 
@@ -98,7 +100,7 @@ final class Router
                 ? call_user_func($route->handler, $request)
                 : null;
 
-            if (!$response instanceof Response) {
+            if (! $response instanceof Response) {
                 $response = Response::json($response);
             }
 
@@ -108,9 +110,9 @@ final class Router
         $pipeline = array_reduce(
             array_reverse($route->middleware),
             fn (callable $next, mixed $middleware): callable => function (Request $request) use ($middleware, $next): Response {
-                $instance = is_string($middleware) ? new $middleware() : $middleware;
+                $instance = is_string($middleware) ? new $middleware : $middleware;
 
-                if (!$instance instanceof MiddlewareInterface) {
+                if (! $instance instanceof MiddlewareInterface) {
                     throw new \RuntimeException('Invalid middleware supplied.');
                 }
 
@@ -125,7 +127,7 @@ final class Router
     private function matchRoute(string $routeUri, string $requestUri): ?array
     {
         $pattern = preg_replace('#\{([^}/]+)\}#', '(?P<$1>[^/]+)', $routeUri);
-        $pattern = '#^' . $pattern . '$#';
+        $pattern = '#^'.$pattern.'$#';
 
         if (preg_match($pattern, $requestUri, $matches) !== 1) {
             return null;

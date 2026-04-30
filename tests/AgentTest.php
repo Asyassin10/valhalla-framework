@@ -6,8 +6,6 @@ namespace Valhalla\Framework\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Valhalla\Framework\Agents\AgentClient;
-use Valhalla\Framework\Agents\AgentServer;
-use Valhalla\Framework\Agents\EchoAgentHandler;
 
 final class AgentTest extends TestCase
 {
@@ -21,10 +19,10 @@ final class AgentTest extends TestCase
         }
     }
 
-    public function testAgentCallReturnsStructuredResponse(): void
+    public function test_agent_call_returns_structured_response(): void
     {
         $port = 9912;
-        $process = proc_open(sprintf('php %s/support/agent_server.php %d', dirname(__DIR__) . '/tests', $port), [
+        $process = proc_open(sprintf('php %s/support/agent_server.php %d', dirname(__DIR__).'/tests', $port), [
             0 => ['pipe', 'r'],
             1 => ['pipe', 'w'],
             2 => ['pipe', 'w'],
@@ -34,7 +32,7 @@ final class AgentTest extends TestCase
         $this->processes[] = $process;
         usleep(300000);
 
-        $client = new AgentClient();
+        $client = new AgentClient;
         $response = $client->call('127.0.0.1', $port, 'summarize', ['text' => 'hello']);
 
         self::assertSame('ok', $response['status']);

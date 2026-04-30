@@ -15,9 +15,13 @@ use Valhalla\Framework\Support\Paths;
 final class Application extends Container
 {
     private Config $config;
+
     private Router $router;
+
     private ErrorHandler $errors;
+
     private array $providers = [];
+
     private ExceptionPipeline $pipeline;
 
     public function __construct(private readonly string $basePath)
@@ -25,17 +29,17 @@ final class Application extends Container
         ob_start();
         try {
             $this->safeBoot($basePath);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             http_response_code(500);
             header('Content-Type: application/json');
             ob_clean();
             echo json_encode([
                 'error' => [
-                    'message' => $e->getMessage(). "sdcsdsdcsdc",
-                    'type'    => $e::class,
-                       'file'    => $e->getFile(),
-    'line'    => $e->getLine(),
-    'trace'   => $e->getTrace(),
+                    'message' => $e->getMessage().'sdcsdsdcsdc',
+                    'type' => $e::class,
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTrace(),
                 ],
             ]);
             exit;
@@ -44,7 +48,7 @@ final class Application extends Container
 
     private function safeBoot(string $basePath): void
     {
-        $this->pipeline = new ExceptionPipeline();
+        $this->pipeline = new ExceptionPipeline;
         Facade::setApplication($this);
 
         Paths::setBasePath($basePath);
@@ -55,7 +59,7 @@ final class Application extends Container
 
         $this->bootstrapLogger();
 
-        $this->router = new Router();
+        $this->router = new Router;
         $this->errors = new ErrorHandler(
             $this->make('logger'),
             (bool) env('APP_DEBUG', false)
@@ -92,7 +96,7 @@ final class Application extends Container
         register_shutdown_function(function (): void {
             $error = error_get_last();
 
-            if (!$error || !in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR], true)) {
+            if (! $error || ! in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR], true)) {
                 return;
             }
 

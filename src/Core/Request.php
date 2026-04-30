@@ -14,8 +14,7 @@ final class Request
         private readonly array $headers = [],
         private readonly array $query = [],
         private readonly array|string|null $body = null
-    ) {
-    }
+    ) {}
 
     public static function capture(): self
     {
@@ -92,7 +91,7 @@ final class Request
             return $this->body;
         }
 
-        if (!is_array($this->body)) {
+        if (! is_array($this->body)) {
             return $default;
         }
 
