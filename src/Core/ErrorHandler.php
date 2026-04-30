@@ -13,7 +13,8 @@ final class ErrorHandler
     public function __construct(
         private readonly Logger $logger,
         private readonly bool $debug = false
-    ) {}
+    ) {
+    }
 
     public function render(Throwable $throwable): Response
     {

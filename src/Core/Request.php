@@ -14,7 +14,8 @@ final class Request
         private readonly array $headers = [],
         private readonly array $query = [],
         private readonly array|string|null $body = null
-    ) {}
+    ) {
+    }
 
     public static function capture(): self
     {

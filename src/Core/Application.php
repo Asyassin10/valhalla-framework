@@ -48,7 +48,7 @@ final class Application extends Container
 
     private function safeBoot(string $basePath): void
     {
-        $this->pipeline = new ExceptionPipeline;
+        $this->pipeline = new ExceptionPipeline();
         Facade::setApplication($this);
 
         Paths::setBasePath($basePath);
@@ -59,7 +59,7 @@ final class Application extends Container
 
         $this->bootstrapLogger();
 
-        $this->router = new Router;
+        $this->router = new Router();
         $this->errors = new ErrorHandler(
             $this->make('logger'),
             (bool) env('APP_DEBUG', false)

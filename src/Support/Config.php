@@ -8,7 +8,9 @@ final class Config
 {
     private array $items = [];
 
-    public function __construct(private readonly string $basePath) {}
+    public function __construct(private readonly string $basePath)
+    {
+    }
 
     public function load(string $directory = 'config'): void
     {

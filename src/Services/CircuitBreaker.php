@@ -11,7 +11,8 @@ final class CircuitBreaker
     public function __construct(
         private readonly int $threshold = 3,
         private readonly int $cooldown = 10
-    ) {}
+    ) {
+    }
 
     public function canPass(string $service): bool
     {

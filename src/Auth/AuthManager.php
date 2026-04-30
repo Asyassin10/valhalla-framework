@@ -16,7 +16,7 @@ final class AuthManager
 
     public function __construct(private readonly Config $config)
     {
-        $this->codec = new JwtCodec;
+        $this->codec = new JwtCodec();
     }
 
     public function attempt(Request $request): ?array

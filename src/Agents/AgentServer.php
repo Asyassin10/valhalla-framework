@@ -12,7 +12,8 @@ final class AgentServer
         private readonly string $host,
         private readonly int $port,
         private readonly AgentTaskHandler $handler
-    ) {}
+    ) {
+    }
 
     public function run(): void
     {

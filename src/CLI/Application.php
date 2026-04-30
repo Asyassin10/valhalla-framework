@@ -26,19 +26,19 @@ final class Application
     public function __construct(private readonly string $basePath)
     {
         foreach ([
-            new NewProjectCommand,
-            new MakeControllerCommand,
-            new MakeMiddlewareCommand,
-            new MakeServiceCommand,
-            new InstallCommand,
-            new AuthGenerateCommand,
-            new RoutesListCommand,
-            new AgentInstallCommand,
-            new AgentStartCommand,
-            new AgentStopCommand,
-            new AgentCallCommand,
-            new AgentListCommand,
-            new AgentServeCommand,
+            new NewProjectCommand(),
+            new MakeControllerCommand(),
+            new MakeMiddlewareCommand(),
+            new MakeServiceCommand(),
+            new InstallCommand(),
+            new AuthGenerateCommand(),
+            new RoutesListCommand(),
+            new AgentInstallCommand(),
+            new AgentStartCommand(),
+            new AgentStopCommand(),
+            new AgentCallCommand(),
+            new AgentListCommand(),
+            new AgentServeCommand(),
         ] as $command) {
             $this->commands[$command->signature()] = $command;
         }
@@ -46,7 +46,7 @@ final class Application
 
     public function run(array $argv): int
     {
-        $console = new Console;
+        $console = new Console();
         $context = new Context($this->basePath);
         $input = array_slice($argv, 1);
         $signature = implode(' ', array_slice($input, 0, 2));

@@ -32,7 +32,7 @@ final class AgentTest extends TestCase
         $this->processes[] = $process;
         usleep(300000);
 
-        $client = new AgentClient;
+        $client = new AgentClient();
         $response = $client->call('127.0.0.1', $port, 'summarize', ['text' => 'hello']);
 
         self::assertSame('ok', $response['status']);

@@ -110,7 +110,7 @@ final class Router
         $pipeline = array_reduce(
             array_reverse($route->middleware),
             fn (callable $next, mixed $middleware): callable => function (Request $request) use ($middleware, $next): Response {
-                $instance = is_string($middleware) ? new $middleware : $middleware;
+                $instance = is_string($middleware) ? new $middleware() : $middleware;
 
                 if (! $instance instanceof MiddlewareInterface) {
                     throw new \RuntimeException('Invalid middleware supplied.');
