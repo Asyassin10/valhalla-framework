@@ -53,7 +53,16 @@ final class Router
         }
 
         $uri = '/'.trim($prefix.'/'.trim($uri, '/'), '/');
-        $route = new RouteDefinition(strtoupper($method), $uri === '//' ? '/' : $uri, $handler, array_merge($groupMiddleware, $middleware));
+        $method = strtoupper($method);
+        $uri = $uri === '//' ? '/' : $uri;
+
+        foreach ($this->routes as $registeredRoute) {
+            if ($registeredRoute->method === $method && $registeredRoute->uri === $uri) {
+                throw new \RuntimeException(sprintf('Route [%s %s] is already registered.', $method, $uri));
+            }
+        }
+
+        $route = new RouteDefinition($method, $uri, $handler, array_merge($groupMiddleware, $middleware));
         $this->routes[] = $route;
 
         return $route;

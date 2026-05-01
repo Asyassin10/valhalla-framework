@@ -52,6 +52,8 @@ final class RouteAttributeLoader
     private function routeDefinitionsFor(ReflectionMethod $method): array
     {
         $routes = [];
+        $className = $method->getDeclaringClass()->getName();
+
         $map = [
             Get::class => 'GET',
             Post::class => 'POST',
@@ -63,8 +65,10 @@ final class RouteAttributeLoader
             foreach ($method->getAttributes($attributeClass) as $attribute) {
                 $instance = $attribute->newInstance();
                 $routes[] = [
-                    'method' => $httpMethod,
-                    'uri' => $instance->uri,
+                'class' => $className,
+                'method' => $httpMethod,
+                'action' => $method->getName(),
+                'uri' => $instance->uri,
                 ];
             }
         }

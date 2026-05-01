@@ -30,8 +30,10 @@ final class CLITest extends TestCase
         self::assertDirectoryExists($tmp.'/sample-service/public');
         self::assertDirectoryExists($tmp.'/sample-service/routes');
         self::assertDirectoryExists($tmp.'/sample-service/config');
+        self::assertDirectoryExists($tmp.'/sample-service/database/migrations');
         self::assertFileExists($tmp.'/sample-service/composer.json');
         self::assertFileExists($tmp.'/sample-service/.env');
+        self::assertFileExists($tmp.'/sample-service/config/database.php');
 
         $composerJson = file_get_contents($tmp.'/sample-service/composer.json') ?: '';
         self::assertStringContainsString('"asyassin10/valhalla-framework"', $composerJson);
@@ -53,5 +55,17 @@ final class CLITest extends TestCase
         self::assertStringContainsString('namespace App\\Controllers;', $controller);
         self::assertStringContainsString('public function index(Request $request): Response', $controller);
         self::assertStringContainsString("return Response::json(['message' => 'ok']);", $controller);
+    }
+
+    public function test_cli_help_lists_orm_and_container_commands(): void
+    {
+        $command = sprintf('php %s/bin/valhalla', dirname(__DIR__));
+        exec($command, $output, $exitCode);
+
+        self::assertSame(0, $exitCode);
+        $text = implode("\n", $output);
+        self::assertStringContainsString('orm:install            Install an ORM driver (eloquent or doctrine).', $text);
+        self::assertStringContainsString('install:docker         Generate a docker container setup.', $text);
+        self::assertStringContainsString('make:model             Generate an ORM model or entity.', $text);
     }
 }

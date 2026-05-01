@@ -4,15 +4,18 @@
 
 # Valhalla
 
-Valhalla is a microservices-first PHP framework for building lightweight JSON APIs, internal service endpoints, CLI-driven workflows, and local agent-style workers.
+Valhalla is a microservices-first PHP framework for building lightweight JSON APIs, internal service endpoints, CLI-driven workflows, local agent-style workers, optional ORM-backed applications, and container-ready services.
 
-It is designed for teams that want a small, focused foundation instead of a full-stack monolith. Valhalla keeps the surface area intentionally compact: routing, middleware, authentication, service-to-service HTTP calls, scaffolding, and a local CLI for fast development.
+It is designed for teams that want a small, focused foundation instead of a full-stack monolith. Valhalla keeps the surface area intentionally compact: routing, middleware, authentication, service-to-service HTTP calls, scaffolding, agents, optional ORM drivers, and one-command container generation.
 
 ## Why Valhalla
 
 - API-first architecture with JSON responses as the default
 - Lightweight core with minimal abstraction overhead
-- CLI scaffolding for projects, controllers, middleware, and services
+- `Route::` facade with automatic attribute route discovery
+- Optional ORM support with pluggable Eloquent or Doctrine drivers
+- Container scaffolding for Docker and Podman
+- CLI scaffolding for projects, controllers, middleware, services, models, and migrations
 - JWT and API token authentication support
 - Service-to-service HTTP client with retries and circuit-breaker support
 - Local TCP-based agent workflow for task-style background services
@@ -48,7 +51,7 @@ valhalla
 
 ## Create a New Project
 
-Once the CLI is installed globally, create a new service from anywhere:
+Create a new service from anywhere:
 
 ```bash
 valhalla new project orders-service
@@ -69,6 +72,14 @@ You can also scaffold and install dependencies in one step:
 ```bash
 valhalla new project orders-service --install
 ```
+
+Generated projects now include:
+
+- `src/Controllers`, `src/Middleware`, `src/Services`
+- `src/Models` and `src/Entities` for optional ORM usage
+- `database/migrations`
+- `config/database.php`
+- route, auth, logging, agents, and service config files
 
 ## Local Development In This Repository
 
@@ -94,7 +105,7 @@ Or:
 
 ## CLI Commands
 
-Valhalla ships with a project and operations CLI.
+Valhalla ships with a project, ORM, container, and operations CLI.
 
 ```text
 new project            Create a new Valhalla API project.
@@ -104,6 +115,21 @@ make:service           Generate a service helper class.
 install                Install Composer dependencies.
 auth:generate          Generate a JWT for a sample or provided user.
 routes:list            List registered routes from routes/api.php.
+orm:install            Install an ORM driver (eloquent or doctrine).
+orm:remove             Remove ORM configuration from the project.
+migrate                Run ORM migrations.
+migrate:rollback       Rollback the last ORM migration.
+migrate:diff           Generate a Doctrine migration diff.
+make:model             Generate an ORM model or entity.
+make:migration         Generate an ORM migration.
+install:docker         Generate a docker container setup.
+install:podman         Generate a podman container setup.
+up                     Start the configured container stack.
+down                   Stop the configured container stack.
+build                  Build the configured container stack.
+logs                   Tail logs from the configured container stack.
+shell                  Open a shell in the app container.
+queue:work             Run the Valhalla queue worker loop.
 agent:install          Register a new local Valhalla agent.
 agent:start            Start a registered local agent in the background.
 agent:stop             Stop a background Valhalla agent.
@@ -132,7 +158,7 @@ Generate a service helper:
 valhalla make:service BillingService
 ```
 
-List your registered routes:
+List registered routes:
 
 ```bash
 valhalla routes:list
@@ -144,7 +170,43 @@ Generate a JWT for testing:
 valhalla auth:generate 1 "Jane Doe"
 ```
 
-## Example API Route
+Install Eloquent ORM support:
+
+```bash
+valhalla orm:install eloquent
+valhalla make:model Order
+valhalla make:migration create_orders_table
+valhalla migrate
+```
+
+Install Doctrine ORM support:
+
+```bash
+valhalla orm:install doctrine
+valhalla make:model Invoice
+valhalla migrate:diff
+valhalla migrate
+```
+
+Generate Docker files:
+
+```bash
+valhalla install:docker
+valhalla build
+valhalla up
+valhalla logs
+valhalla shell
+```
+
+Generate Podman files:
+
+```bash
+valhalla install:podman
+valhalla build
+valhalla up
+```
+
+## Routing
 
 Valhalla is built around simple, readable route definitions.
 
@@ -168,6 +230,66 @@ Route::post('/orders', [OrdersController::class, 'store']);
 
 The `Route` facade is the recommended style because it gives clean editor autocomplete and avoids `$router` variable warnings in IDEs.
 
+### Route Groups
+
+```php
+use App\Middleware\AuthMiddleware;
+use Valhalla\Framework\Facades\Route;
+
+Route::group('/internal', [AuthMiddleware::class], function (): void {
+    Route::get('/status', fn () => ['ok' => true]);
+});
+```
+
+### Controller Arrays
+
+```php
+use App\Controllers\UsersController;
+use Valhalla\Framework\Facades\Route;
+
+Route::get('/users', [UsersController::class, 'index']);
+Route::get('/users/{id}', [UsersController::class, 'show']);
+Route::post('/users', [UsersController::class, 'store']);
+```
+
+### Attribute Routes
+
+Controllers in `src/Controllers` can declare routes with PHP 8 attributes, and Valhalla loads them automatically when the app calls `loadRoutes(...)`.
+
+```php
+use Valhalla\Framework\Core\Request;
+use Valhalla\Framework\Core\Response;
+use Valhalla\Framework\Routing\Attributes\Get;
+use Valhalla\Framework\Routing\Attributes\Post;
+
+final class UserController
+{
+    #[Get('/users')]
+    public function index(Request $request): Response
+    {
+        return Response::json(['users' => []]);
+    }
+
+    #[Post('/users')]
+    public function store(Request $request): Response
+    {
+        return Response::json(['created' => true]);
+    }
+}
+```
+
+Default bootstrap stays simple:
+
+```php
+$app->loadRoutes(dirname(__DIR__).'/routes/api.php');
+```
+
+If you need manual control, the low-level method still exists:
+
+```php
+$app->loadAttributeRoutes(UserController::class);
+```
+
 ## Authentication
 
 Valhalla supports:
@@ -185,6 +307,7 @@ Protect a route with middleware:
 
 ```php
 use Valhalla\Framework\Auth\Auth;
+use Valhalla\Framework\Core\Response;
 use Valhalla\Framework\Facades\Route;
 use Valhalla\Framework\Middleware\AuthMiddleware;
 
@@ -192,6 +315,204 @@ Route::get('/secure', fn () => Response::json([
     'authenticated' => true,
     'user' => Auth::user(),
 ]), [AuthMiddleware::class]);
+```
+
+## Pluggable ORM System
+
+Valhalla supports one optional ORM driver per project. Install either Eloquent or Doctrine, never both.
+
+### ORM Config
+
+`config/orm.php` is the source of truth:
+
+```php
+return [
+    'driver' => 'eloquent',
+];
+```
+
+or:
+
+```php
+return [
+    'driver' => 'doctrine',
+];
+```
+
+If `config/orm.php` does not exist, ORM support is skipped silently during application boot.
+
+### Eloquent Driver
+
+Install it with:
+
+```bash
+valhalla orm:install eloquent
+```
+
+This command:
+
+- runs `composer require illuminate/database`
+- creates `src/Models/`
+- creates `database/migrations/`
+- writes `config/orm.php`
+- ensures `config/database.php` exists
+
+Generate a model:
+
+```bash
+valhalla make:model Order
+```
+
+This creates a model under `src/Models/` extending `Illuminate\Database\Eloquent\Model` with `protected array $guarded = [];`.
+
+Generate a migration:
+
+```bash
+valhalla make:migration create_orders_table
+```
+
+Run migrations:
+
+```bash
+valhalla migrate
+```
+
+Rollback the last migration:
+
+```bash
+valhalla migrate:rollback
+```
+
+### Doctrine Driver
+
+Install it with:
+
+```bash
+valhalla orm:install doctrine
+```
+
+This command:
+
+- runs `composer require doctrine/orm doctrine/migrations`
+- creates `src/Entities/`
+- creates `database/migrations/`
+- writes `config/orm.php`
+- ensures `config/database.php` exists
+
+Generate an entity:
+
+```bash
+valhalla make:model Invoice
+```
+
+Doctrine entities are generated in `src/Entities/` with mapping attributes and a `getId()` getter. After adding fields, generate a diff migration with:
+
+```bash
+valhalla migrate:diff
+```
+
+Apply migrations:
+
+```bash
+valhalla migrate
+```
+
+Rollback to the previous Doctrine migration:
+
+```bash
+valhalla migrate:rollback
+```
+
+Remove ORM config:
+
+```bash
+valhalla orm:remove
+```
+
+This removes `config/orm.php` and tells you to remove the Composer package manually.
+
+### Database Config
+
+Valhalla reads database credentials from `config/database.php` and `.env` values such as:
+
+```text
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=valhalla
+DB_USERNAME=valhalla
+DB_PASSWORD=secret
+```
+
+## Docker And Podman Setup
+
+Valhalla can generate a complete container setup with a single command.
+
+### Install Docker Files
+
+```bash
+valhalla install:docker
+```
+
+### Install Podman Files
+
+```bash
+valhalla install:podman
+```
+
+Both commands ask for:
+
+- PHP version: `8.2` or `8.3`
+- Database: `mysql`, `postgres`, or `none`
+- Database name, username, and password when a database is enabled
+- Cache: `redis` or `none`
+- Queue worker: `yes` or `no`
+- HTTP port to expose
+
+Generated files are placed under `docker/`:
+
+- `docker/Dockerfile`
+- `docker/docker-compose.yml` or `docker/podman-compose.yml`
+- `docker/nginx/nginx.conf`
+- `docker/mysql/init.sql` when MySQL is selected
+- `docker/.dockerignore`
+
+Valhalla also writes `config/container.php`:
+
+```php
+return [
+    'runtime' => 'docker',
+];
+```
+
+or:
+
+```php
+return [
+    'runtime' => 'podman',
+];
+```
+
+### Container Runtime Commands
+
+Once a runtime is installed, use:
+
+```bash
+valhalla build
+valhalla up
+valhalla logs
+valhalla shell
+valhalla down
+```
+
+These commands automatically read `config/container.php` to choose Docker or Podman.
+
+### Queue Worker Container
+
+If you choose a queue worker during container setup, Valhalla creates a worker service that runs:
+
+```bash
+php bin/valhalla queue:work
 ```
 
 ## Service-to-Service Calls
@@ -238,11 +559,13 @@ This is useful for internal automation, background jobs, or local task-oriented 
 ```text
 bin/                     CLI entrypoint
 config/                  Framework and application configuration
+database/                Migration files for ORM-backed apps
 docs/                    Documentation guides
+docker/                  Generated Docker or Podman files
 examples/basic-service/  Sample Valhalla service
 public/                  HTTP entrypoint
 routes/                  Route definitions
-src/                     Framework source code
+src/                     Framework source code and app classes
 tests/                   PHPUnit tests
 ```
 
@@ -285,3 +608,5 @@ Valhalla is a strong fit for:
 - microservice backends
 - service orchestration layers
 - agent-like local workers
+- ORM-backed services with optional Eloquent or Doctrine integration
+- containerized API services with Docker or Podman

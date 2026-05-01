@@ -55,7 +55,7 @@ Generated controllers use `App\Controllers` and include a default `index` method
 
 ## Attribute Routes
 
-Valhalla also supports PHP 8 attributes for manual controller registration.
+Valhalla supports PHP 8 attributes on controllers placed in `src/Controllers`. Those attribute routes are loaded automatically when you call `$app->loadRoutes(...)`.
 
 ```php
 use Valhalla\Framework\Core\Request;
@@ -81,7 +81,13 @@ final class UserController
 }
 ```
 
-Register attribute routes during bootstrap:
+Default bootstrap stays simple:
+
+```php
+$app->loadRoutes(dirname(__DIR__).'/routes/api.php');
+```
+
+If you need manual control for a specific controller, the low-level API still exists:
 
 ```php
 $app->loadAttributeRoutes(UserController::class);

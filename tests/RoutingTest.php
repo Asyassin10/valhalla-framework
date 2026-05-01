@@ -138,6 +138,17 @@ PHP);
         $router->dispatch(Request::fromArray(['path' => '/users']));
     }
 
+    public function test_duplicate_route_registration_throws_runtime_exception(): void
+    {
+        $router = new Router();
+        $router->get('/users', fn () => Response::json(['ok' => true]));
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Route [GET /users] is already registered.');
+
+        $router->get('/users', fn () => Response::json(['ok' => false]));
+    }
+
     public function test_attribute_routes_can_be_loaded_through_application(): void
     {
         $app = $this->makeApplication();
@@ -157,11 +168,133 @@ PHP);
         self::assertSame([AttributeRoutingMiddleware::class], $app->router()->routes()[0]->middleware);
     }
 
+    public function test_attribute_routes_are_loaded_automatically_from_app_controllers(): void
+    {
+        $basePath = sys_get_temp_dir().'/valhalla-app-'.bin2hex(random_bytes(4));
+        mkdir($basePath.'/config', 0777, true);
+        mkdir($basePath.'/routes', 0777, true);
+        mkdir($basePath.'/src/Controllers', 0777, true);
+
+        file_put_contents($basePath.'/config/logging.php', <<<'PHP'
+<?php
+
+declare(strict_types=1);
+
+return [
+    'driver' => 'single',
+    'channel' => 'application',
+    'path' => storage_path('logs'),
+    'level' => 'DEBUG',
+];
+PHP);
+        file_put_contents($basePath.'/config/auth.php', <<<'PHP'
+<?php
+
+declare(strict_types=1);
+
+return [
+    'jwt' => [
+        'secret' => 'change-me',
+        'issuer' => 'valhalla-service',
+        'audience' => 'internal-clients',
+        'ttl' => 3600,
+        'algo' => 'HS256',
+    ],
+    'api_tokens' => [],
+];
+PHP);
+        file_put_contents($basePath.'/routes/api.php', <<<'PHP'
+<?php
+
+declare(strict_types=1);
+
+use Valhalla\Framework\Core\Response;
+use Valhalla\Framework\Facades\Route;
+
+Route::get('/closure-health', fn () => Response::json(['ok' => true]));
+PHP);
+        file_put_contents($basePath.'/src/Controllers/AutoUsersController.php', <<<'PHP'
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controllers;
+
+use Valhalla\Framework\Core\Request;
+use Valhalla\Framework\Core\Response;
+use Valhalla\Framework\Routing\Attributes\Get;
+
+final class AutoUsersController
+{
+    #[Get('/auto-users')]
+    public function index(Request $request): Response
+    {
+        return Response::json([
+            'auto' => true,
+            'path' => $request->path(),
+        ]);
+    }
+}
+PHP);
+
+        $this->applicationCount++;
+        $app = new Application($basePath);
+        $app->loadRoutes($basePath.'/routes/api.php');
+
+        $closure = $app->handle(Request::fromArray([
+            'method' => 'GET',
+            'path' => '/closure-health',
+        ]));
+        $attribute = $app->handle(Request::fromArray([
+            'method' => 'GET',
+            'path' => '/auto-users',
+        ]));
+
+        $this->deleteDirectory($basePath);
+
+        self::assertStringContainsString('"ok": true', $closure->payload());
+        self::assertStringContainsString('"auto": true', $attribute->payload());
+    }
+
+    public function test_duplicate_attribute_route_registration_throws_runtime_exception(): void
+    {
+        $app = $this->makeApplication();
+        $app->loadAttributeRoutes(AttributeRoutingTestController::class);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Route [GET /attribute-users] is already registered.');
+
+        $app->loadAttributeRoutes(DuplicateAttributeRoutingTestController::class);
+    }
+
     private function makeApplication(): Application
     {
         $this->applicationCount++;
 
         return new Application(dirname(__DIR__));
+    }
+
+    private function deleteDirectory(string $path): void
+    {
+        if (! is_dir($path)) {
+            return;
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($iterator as $item) {
+            if ($item->isDir()) {
+                rmdir($item->getPathname());
+                continue;
+            }
+
+            unlink($item->getPathname());
+        }
+
+        rmdir($path);
     }
 }
 
@@ -203,5 +336,17 @@ final class AttributeRoutingMiddleware implements \Valhalla\Framework\Core\Middl
     public function handle(Request $request, callable $next): Response
     {
         return $next($request);
+    }
+}
+
+final class DuplicateAttributeRoutingTestController
+{
+    #[Get('/attribute-users')]
+    public function index(Request $request): Response
+    {
+        return Response::json([
+            'duplicate' => true,
+            'path' => $request->path(),
+        ]);
     }
 }

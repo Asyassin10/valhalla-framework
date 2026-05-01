@@ -11,11 +11,21 @@ use Valhalla\Framework\CLI\Commands\AgentServeCommand;
 use Valhalla\Framework\CLI\Commands\AgentStartCommand;
 use Valhalla\Framework\CLI\Commands\AgentStopCommand;
 use Valhalla\Framework\CLI\Commands\AuthGenerateCommand;
+use Valhalla\Framework\CLI\Commands\InstallRuntimeCommand;
 use Valhalla\Framework\CLI\Commands\InstallCommand;
+use Valhalla\Framework\CLI\Commands\MakeMigrationCommand;
 use Valhalla\Framework\CLI\Commands\MakeControllerCommand;
 use Valhalla\Framework\CLI\Commands\MakeMiddlewareCommand;
+use Valhalla\Framework\CLI\Commands\MakeModelCommand;
 use Valhalla\Framework\CLI\Commands\MakeServiceCommand;
+use Valhalla\Framework\CLI\Commands\MigrateCommand;
+use Valhalla\Framework\CLI\Commands\MigrateDiffCommand;
+use Valhalla\Framework\CLI\Commands\MigrateRollbackCommand;
 use Valhalla\Framework\CLI\Commands\NewProjectCommand;
+use Valhalla\Framework\CLI\Commands\OrmInstallCommand;
+use Valhalla\Framework\CLI\Commands\OrmRemoveCommand;
+use Valhalla\Framework\CLI\Commands\QueueWorkCommand;
+use Valhalla\Framework\CLI\Commands\RuntimeCommand;
 use Valhalla\Framework\CLI\Commands\RoutesListCommand;
 
 final class Application
@@ -33,6 +43,21 @@ final class Application
             new InstallCommand(),
             new AuthGenerateCommand(),
             new RoutesListCommand(),
+            new OrmInstallCommand(),
+            new OrmRemoveCommand(),
+            new MigrateCommand(),
+            new MigrateRollbackCommand(),
+            new MigrateDiffCommand(),
+            new MakeModelCommand(),
+            new MakeMigrationCommand(),
+            new InstallRuntimeCommand('docker'),
+            new InstallRuntimeCommand('podman'),
+            new RuntimeCommand('up', 'Start the configured container stack.'),
+            new RuntimeCommand('down', 'Stop the configured container stack.'),
+            new RuntimeCommand('build', 'Build the configured container stack.'),
+            new RuntimeCommand('logs', 'Tail logs from the configured container stack.'),
+            new RuntimeCommand('shell', 'Open a shell in the app container.'),
+            new QueueWorkCommand(),
             new AgentInstallCommand(),
             new AgentStartCommand(),
             new AgentStopCommand(),
