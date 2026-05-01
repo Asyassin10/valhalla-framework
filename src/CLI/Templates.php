@@ -20,11 +20,9 @@ use Valhalla\Framework\Core\Response;
 
 final class {$class}
 {
-    public function __invoke(Request \$request): Response
+    public function index(Request \$request): Response
     {
-        return Response::json([
-            'message' => '{$class} responding from Valhalla.',
-        ]);
+        return Response::json(['message' => 'ok']);
     }
 }
 PHP;
@@ -79,16 +77,19 @@ PHP;
 
 declare(strict_types=1);
 
+/** @var \Valhalla\Framework\Core\Router $router */
+
 use App\Controllers\HealthController;
 use Valhalla\Framework\Auth\Auth;
-use Valhalla\Framework\Middleware\AuthMiddleware;
 use Valhalla\Framework\Core\Response;
+use Valhalla\Framework\Facades\Route;
+use Valhalla\Framework\Middleware\AuthMiddleware;
 
-$router->get('/health', new HealthController());
-$router->get('/token', fn () => Response::json([
+Route::get('/health', [HealthController::class, 'index']);
+Route::get('/token', fn () => Response::json([
     'token' => Auth::generateToken(['id' => 1, 'name' => 'Demo Service']),
 ]));
-$router->get('/secure', fn () => Response::json([
+Route::get('/secure', fn () => Response::json([
     'authenticated' => true,
     'user' => Auth::user(),
 ]), [AuthMiddleware::class]);
@@ -126,7 +127,7 @@ use Valhalla\Framework\Core\Response;
 
 final class HealthController
 {
-    public function __invoke(Request \$request): Response
+    public function index(Request \$request): Response
     {
         return Response::json([
             'service' => 'basic-service',
@@ -223,9 +224,10 @@ PHP;
 declare(strict_types=1);
 
 return [
+    'driver' => 'single',
     'channel' => 'application',
-    'path' => storage_path('logs/application.log'),
-    'level' => 'debug',
+    'path' => storage_path('logs'),
+    'level' => 'DEBUG',
 ];
 PHP;
     }

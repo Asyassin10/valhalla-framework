@@ -8,6 +8,14 @@
 
 Add the generated controller to `routes/api.php`.
 
+```php
+use App\Controllers\UsersController;
+use App\Middleware\AuditMiddleware;
+use Valhalla\Framework\Facades\Route;
+
+Route::get('/users', [UsersController::class, 'index'], [AuditMiddleware::class]);
+```
+
 ## Middleware
 
 ```bash
@@ -17,7 +25,9 @@ Add the generated controller to `routes/api.php`.
 Attach it to a route:
 
 ```php
-$router->get('/users', new UsersController(), [AuditMiddleware::class]);
+use Valhalla\Framework\Facades\Route;
+
+Route::get('/users', [UsersController::class, 'index'], [AuditMiddleware::class]);
 ```
 
 ## Services

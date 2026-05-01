@@ -8,6 +8,7 @@ use Throwable;
 use Valhalla\Framework\Auth\Auth;
 use Valhalla\Framework\Auth\AuthManager;
 use Valhalla\Framework\Log\Logger;
+use Valhalla\Framework\Routing\RouteAttributeLoader;
 use Valhalla\Framework\Support\Config;
 use Valhalla\Framework\Support\Env;
 use Valhalla\Framework\Support\Paths;
@@ -35,7 +36,7 @@ final class Application extends Container
             ob_clean();
             echo json_encode([
                 'error' => [
-                    'message' => $e->getMessage().'sdcsdsdcsdc',
+                    'message' => $e->getMessage(),
                     'type' => $e::class,
                     'file' => $e->getFile(),
                     'line' => $e->getLine(),
@@ -60,6 +61,7 @@ final class Application extends Container
         $this->bootstrapLogger();
 
         $this->router = new Router();
+        $this->singleton('router', fn () => $this->router);
         $this->errors = new ErrorHandler(
             $this->make('logger'),
             (bool) env('APP_DEBUG', false)
@@ -140,8 +142,15 @@ final class Application extends Container
 
     public function loadRoutes(string $path): void
     {
+        /** @var Router $router */
         $router = $this->router;
         require $path;
+    }
+
+    public function loadAttributeRoutes(string $controllerClass): void
+    {
+        $loader = new RouteAttributeLoader($this->router);
+        $loader->loadFromClass($controllerClass);
     }
 
     public function handle(?Request $request = null): Response

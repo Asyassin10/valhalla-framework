@@ -149,18 +149,24 @@ valhalla auth:generate 1 "Jane Doe"
 Valhalla is built around simple, readable route definitions.
 
 ```php
+use App\Controllers\OrdersController;
 use Valhalla\Framework\Core\Request;
 use Valhalla\Framework\Core\Response;
+use Valhalla\Framework\Facades\Route;
 
-$router->get('/health', fn () => Response::json([
+Route::get('/health', fn () => Response::json([
     'ok' => true,
     'service' => 'orders',
 ]));
 
-$router->get('/users/{id}', fn (Request $request) => Response::json([
+Route::get('/users/{id}', fn (Request $request) => Response::json([
     'id' => $request->route('id'),
 ]));
+
+Route::post('/orders', [OrdersController::class, 'store']);
 ```
+
+The `Route` facade is the recommended style because it gives clean editor autocomplete and avoids `$router` variable warnings in IDEs.
 
 ## Authentication
 
@@ -179,9 +185,10 @@ Protect a route with middleware:
 
 ```php
 use Valhalla\Framework\Auth\Auth;
+use Valhalla\Framework\Facades\Route;
 use Valhalla\Framework\Middleware\AuthMiddleware;
 
-$router->get('/secure', fn () => Response::json([
+Route::get('/secure', fn () => Response::json([
     'authenticated' => true,
     'user' => Auth::user(),
 ]), [AuthMiddleware::class]);
@@ -278,10 +285,3 @@ Valhalla is a strong fit for:
 - microservice backends
 - service orchestration layers
 - agent-like local workers
-- lightweight platform tooling
-
-The current design keeps the core intentionally small so teams can extend it without fighting framework complexity.
-
-## License
-
-MIT

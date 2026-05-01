@@ -35,9 +35,28 @@ final class RoutesListCommand implements Command
         $app->loadRoutes($routesFile);
 
         foreach ($app->router()->routes() as $route) {
-            $console->line(sprintf('%-6s %s', $route->method, $route->uri));
+            $handler = $this->formatHandler($route->handler);
+            $console->line($handler === null
+                ? sprintf('%-6s %s', $route->method, $route->uri)
+                : sprintf('%-6s %s %s', $route->method, $route->uri, $handler)
+            );
         }
 
         return 0;
+    }
+
+    private function formatHandler(mixed $handler): ?string
+    {
+        if (! is_array($handler) || count($handler) !== 2) {
+            return null;
+        }
+
+        [$className, $methodName] = $handler;
+
+        if (! is_string($className) || ! is_string($methodName)) {
+            return null;
+        }
+
+        return basename(str_replace('\\', '/', $className)).'@'.$methodName;
     }
 }

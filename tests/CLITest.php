@@ -14,7 +14,7 @@ final class CLITest extends TestCase
         exec($command, $output, $exitCode);
 
         self::assertSame(0, $exitCode);
-        self::assertContains('GET    /health', $output);
+        self::assertContains('GET    /health HealthController@index', $output);
         self::assertContains('GET    /users/{id}', $output);
     }
 
@@ -34,6 +34,24 @@ final class CLITest extends TestCase
         self::assertFileExists($tmp.'/sample-service/.env');
 
         $composerJson = file_get_contents($tmp.'/sample-service/composer.json') ?: '';
-        self::assertStringContainsString('"valhalla/framework"', $composerJson);
+        self::assertStringContainsString('"asyassin10/valhalla-framework"', $composerJson);
+    }
+
+    public function test_make_controller_generates_index_method(): void
+    {
+        $tmp = sys_get_temp_dir().'/valhalla-cli-'.bin2hex(random_bytes(4));
+        mkdir($tmp, 0777, true);
+        mkdir($tmp.'/src/Controllers', 0777, true);
+
+        $command = sprintf('cd %s && php %s/bin/valhalla make:controller Users', escapeshellarg($tmp), dirname(__DIR__));
+        exec($command, $output, $exitCode);
+
+        self::assertSame(0, $exitCode);
+        self::assertFileExists($tmp.'/src/Controllers/UsersController.php');
+
+        $controller = file_get_contents($tmp.'/src/Controllers/UsersController.php') ?: '';
+        self::assertStringContainsString('namespace App\\Controllers;', $controller);
+        self::assertStringContainsString('public function index(Request $request): Response', $controller);
+        self::assertStringContainsString("return Response::json(['message' => 'ok']);", $controller);
     }
 }
