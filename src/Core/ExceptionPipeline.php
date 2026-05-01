@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Valhalla\Framework\Core;
 
-use ErrorException;
 use Throwable;
-use Valhalla\Framework\Log\Logger;
 
 final class ExceptionPipeline
 {
-     /** @var callable[] */
+    /** @var callable[] */
     private array $handlers = [];
 
     public function add(callable $handler): void

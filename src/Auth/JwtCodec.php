@@ -42,13 +42,13 @@ final class JwtCodec
         $header = json_decode($this->base64UrlDecode($encodedHeader), true);
         $payload = json_decode($this->base64UrlDecode($encodedPayload), true);
 
-        if (!is_array($header) || !is_array($payload) || ($header['alg'] ?? null) !== $algo) {
+        if (! is_array($header) || ! is_array($payload) || ($header['alg'] ?? null) !== $algo) {
             throw new AuthenticationException('Invalid JWT token.');
         }
 
-        $expected = $this->base64UrlEncode(hash_hmac('sha256', $encodedHeader . '.' . $encodedPayload, $secret, true));
+        $expected = $this->base64UrlEncode(hash_hmac('sha256', $encodedHeader.'.'.$encodedPayload, $secret, true));
 
-        if (!hash_equals($expected, $encodedSignature)) {
+        if (! hash_equals($expected, $encodedSignature)) {
             throw new AuthenticationException('Invalid JWT token.');
         }
 

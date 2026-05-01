@@ -23,18 +23,20 @@ final class AgentStopCommand implements Command
     public function handle(array $arguments, Console $console, Context $context): int
     {
         $name = $arguments[0] ?? null;
-        $pidFile = (string) $context->config()->get('agents.pid_dir') . DIRECTORY_SEPARATOR . $name . '.pid';
+        $pidFile = (string) $context->config()->get('agents.pid_dir').DIRECTORY_SEPARATOR.$name.'.pid';
 
-        if ($name === null || !is_file($pidFile)) {
+        if ($name === null || ! is_file($pidFile)) {
             $console->error('Agent PID file not found.');
+
             return 1;
         }
 
         $pid = trim((string) file_get_contents($pidFile));
-        shell_exec('kill ' . escapeshellarg($pid));
+        shell_exec('kill '.escapeshellarg($pid));
         unlink($pidFile);
 
         $console->line(sprintf('Agent [%s] stopped.', $name));
+
         return 0;
     }
 }

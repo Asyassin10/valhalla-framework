@@ -22,11 +22,11 @@ final class AuthTest extends TestCase
         Auth::setManager($this->manager);
     }
 
-    public function testJwtRoundTripWorks(): void
+    public function test_jwt_round_trip_works(): void
     {
         $token = $this->manager->generateToken(['id' => 7, 'name' => 'Jane']);
         $request = Request::fromArray([
-            'headers' => ['Authorization' => 'Bearer ' . $token],
+            'headers' => ['Authorization' => 'Bearer '.$token],
         ]);
 
         $user = $this->manager->attempt($request);
@@ -35,7 +35,7 @@ final class AuthTest extends TestCase
         self::assertTrue($this->manager->check());
     }
 
-    public function testApiTokenWorks(): void
+    public function test_api_token_works(): void
     {
         $request = Request::fromArray([
             'headers' => ['X-API-Token' => 'local-service-token'],

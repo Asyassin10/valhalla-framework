@@ -24,6 +24,7 @@ final class CircuitBreaker
 
         if ((time() - $entry['opened_at']) >= $this->cooldown) {
             $this->reset($service);
+
             return true;
         }
 

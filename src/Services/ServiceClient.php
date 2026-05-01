@@ -33,7 +33,7 @@ final class ServiceClient
 
     public function json(string $service, string $method, string $url, array $payload = [], array $headers = []): array
     {
-        if (!$this->circuitBreaker->canPass($service)) {
+        if (! $this->circuitBreaker->canPass($service)) {
             throw new RuntimeException(sprintf('Circuit breaker is open for [%s].', $service));
         }
 

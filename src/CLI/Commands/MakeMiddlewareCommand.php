@@ -24,11 +24,12 @@ final class MakeMiddlewareCommand implements Command
     public function handle(array $arguments, Console $console, Context $context): int
     {
         $name = $arguments[0] ?? 'GeneratedMiddleware';
-        $class = str_ends_with($name, 'Middleware') ? $name : $name . 'Middleware';
-        $path = $context->workingPath() . '/src/Middleware/' . $class . '.php';
+        $class = str_ends_with($name, 'Middleware') ? $name : $name.'Middleware';
+        $path = $context->workingPath().'/src/Middleware/'.$class.'.php';
         @mkdir(dirname($path), 0777, true);
         file_put_contents($path, Templates::middleware('App\Middleware', $class));
         $console->line(sprintf('Middleware created: %s', $path));
+
         return 0;
     }
 }

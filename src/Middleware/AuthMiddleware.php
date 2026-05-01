@@ -16,7 +16,7 @@ final class AuthMiddleware implements MiddlewareInterface
     {
         Auth::attempt($request);
 
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             throw new AuthenticationException();
         }
 

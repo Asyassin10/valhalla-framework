@@ -29,6 +29,7 @@ final class AgentInstallCommand implements Command
 
         if ($name === null) {
             $console->error('Usage: valhalla agent:install NAME [port]');
+
             return 1;
         }
 
@@ -36,6 +37,7 @@ final class AgentInstallCommand implements Command
         $registry->set($name, ['host' => $host, 'port' => $port]);
 
         $console->line(sprintf('Agent [%s] installed on %s:%d', $name, $host, $port));
+
         return 0;
     }
 }

@@ -30,6 +30,7 @@ final class AgentServeCommand implements Command
 
         $console->line(sprintf('Serving agent [%s] on %s:%d', $name, $host, $port));
         (new AgentServer($host, $port, new EchoAgentHandler()))->run();
+
         return 0;
     }
 }

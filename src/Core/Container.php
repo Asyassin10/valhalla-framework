@@ -9,6 +9,7 @@ use Exception;
 class Container
 {
     protected array $bindings = [];
+
     protected array $instances = [];
 
     public function bind(string $key, callable $resolver): void

@@ -54,6 +54,7 @@ final class Application
         if (isset($this->commands[$signature])) {
             $command = $this->commands[$signature];
             $arguments = array_slice($input, 2);
+
             return $command->handle($arguments, $console, $context);
         }
 

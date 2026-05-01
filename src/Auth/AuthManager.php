@@ -25,6 +25,7 @@ final class AuthManager
 
         if ($token !== null) {
             $this->currentUser = $this->verifyJwt($token);
+
             return $this->currentUser;
         }
 
@@ -32,6 +33,7 @@ final class AuthManager
 
         if ($apiToken !== '') {
             $this->currentUser = $this->verifyApiToken($apiToken);
+
             return $this->currentUser;
         }
 
@@ -89,7 +91,7 @@ final class AuthManager
     {
         $tokens = (array) $this->config->get('auth.api_tokens', []);
 
-        if (!array_key_exists($token, $tokens)) {
+        if (! array_key_exists($token, $tokens)) {
             throw new AuthenticationException('Invalid API token.');
         }
 

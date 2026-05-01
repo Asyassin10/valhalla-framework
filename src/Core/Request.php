@@ -92,7 +92,7 @@ final class Request
             return $this->body;
         }
 
-        if (!is_array($this->body)) {
+        if (! is_array($this->body)) {
             return $default;
         }
 
