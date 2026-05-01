@@ -13,9 +13,7 @@ final class NewProjectCommand implements Command
 {
     private const DIRECTORIES = [
         'src/Controllers',
-        'src/Entities',
         'src/Middleware',
-        'src/Models',
         'src/Services',
         'database/migrations',
         'routes',

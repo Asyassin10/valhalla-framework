@@ -31,6 +31,8 @@ final class CLITest extends TestCase
         self::assertDirectoryExists($tmp.'/sample-service/routes');
         self::assertDirectoryExists($tmp.'/sample-service/config');
         self::assertDirectoryExists($tmp.'/sample-service/database/migrations');
+        self::assertDirectoryDoesNotExist($tmp.'/sample-service/src/Models');
+        self::assertDirectoryDoesNotExist($tmp.'/sample-service/src/Entities');
         self::assertFileExists($tmp.'/sample-service/composer.json');
         self::assertFileExists($tmp.'/sample-service/.env');
         self::assertFileExists($tmp.'/sample-service/config/database.php');

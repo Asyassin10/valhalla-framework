@@ -76,10 +76,14 @@ valhalla new project orders-service --install
 Generated projects now include:
 
 - `src/Controllers`, `src/Middleware`, `src/Services`
-- `src/Models` and `src/Entities` for optional ORM usage
 - `database/migrations`
 - `config/database.php`
 - route, auth, logging, agents, and service config files
+
+ORM-specific directories are created only when you install an ORM driver:
+
+- `valhalla orm:install eloquent` creates `src/Models`
+- `valhalla orm:install doctrine` creates `src/Entities`
 
 ## Local Development In This Repository
 
