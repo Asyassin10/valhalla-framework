@@ -9,7 +9,7 @@ use Valhalla\Framework\Core\Response;
 
 final class HealthController
 {
-    public function __invoke(Request $request): Response
+    public function index(Request $request): Response
     {
         return Response::json([
             'service' => 'basic-service',

@@ -15,6 +15,7 @@ final class NewProjectCommand implements Command
         'src/Controllers',
         'src/Middleware',
         'src/Services',
+        'database/migrations',
         'routes',
         'public',
         'tests',
@@ -57,6 +58,7 @@ final class NewProjectCommand implements Command
         file_put_contents($target.'/.env.example', Templates::envExample());
         copy($target.'/.env.example', $target.'/.env');
         file_put_contents($target.'/config/auth.php', Templates::projectAuthConfig());
+        file_put_contents($target.'/config/database.php', Templates::projectDatabaseConfig());
         file_put_contents($target.'/config/services.php', Templates::projectServicesConfig());
         file_put_contents($target.'/config/logging.php', Templates::projectLoggingConfig());
         file_put_contents($target.'/config/agents.php', Templates::projectAgentsConfig());

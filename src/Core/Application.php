@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace Valhalla\Framework\Core;
 
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use Throwable;
 use Valhalla\Framework\Auth\Auth;
 use Valhalla\Framework\Auth\AuthManager;
 use Valhalla\Framework\Log\Logger;
+use Valhalla\Framework\ORM\OrmManager;
+use Valhalla\Framework\Routing\RouteAttributeLoader;
 use Valhalla\Framework\Support\Config;
 use Valhalla\Framework\Support\Env;
 use Valhalla\Framework\Support\Paths;
@@ -35,7 +39,7 @@ final class Application extends Container
             ob_clean();
             echo json_encode([
                 'error' => [
-                    'message' => $e->getMessage().'sdcsdsdcsdc',
+                    'message' => $e->getMessage(),
                     'type' => $e::class,
                     'file' => $e->getFile(),
                     'line' => $e->getLine(),
@@ -60,6 +64,7 @@ final class Application extends Container
         $this->bootstrapLogger();
 
         $this->router = new Router();
+        $this->singleton('router', fn () => $this->router);
         $this->errors = new ErrorHandler(
             $this->make('logger'),
             (bool) env('APP_DEBUG', false)
@@ -77,6 +82,10 @@ final class Application extends Container
         $this->registerErrorHandling();
 
         Auth::setManager(new AuthManager($this->config));
+
+        if (is_file($basePath.'/config/orm.php')) {
+            (new OrmManager($this->config, $basePath))->boot();
+        }
     }
 
     private function registerErrorHandling(): void
@@ -140,8 +149,57 @@ final class Application extends Container
 
     public function loadRoutes(string $path): void
     {
+        /** @var Router $router */
         $router = $this->router;
         require $path;
+        $this->loadAttributeRoutesFromDirectory(
+            $this->basePath.DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR.'Controllers',
+            'App\\Controllers'
+        );
+    }
+
+    public function loadAttributeRoutes(string $controllerClass): void
+    {
+        $loader = new RouteAttributeLoader($this->router);
+        $loader->loadFromClass($controllerClass);
+    }
+
+    private function loadAttributeRoutesFromDirectory(string $directory, string $namespace): void
+    {
+        if (! is_dir($directory)) {
+            return;
+        }
+
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($directory, RecursiveDirectoryIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $file) {
+            if (! $file->isFile() || $file->getExtension() !== 'php') {
+                continue;
+            }
+
+            $className = $this->classNameFromFile($file->getPathname(), $directory, $namespace);
+            require_once $file->getPathname();
+
+            if (! class_exists($className)) {
+                continue;
+            }
+
+            $this->loadAttributeRoutes($className);
+        }
+    }
+
+    private function classNameFromFile(string $path, string $directory, string $namespace): string
+    {
+        $relativePath = substr($path, strlen(rtrim($directory, DIRECTORY_SEPARATOR)) + 1);
+        $relativeClass = str_replace(
+            [DIRECTORY_SEPARATOR, '.php'],
+            ['\\', ''],
+            $relativePath
+        );
+
+        return $namespace.'\\'.$relativeClass;
     }
 
     public function handle(?Request $request = null): Response

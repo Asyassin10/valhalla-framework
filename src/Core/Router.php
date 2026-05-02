@@ -38,7 +38,7 @@ final class Router
     public function group(string $prefix, array $middleware, Closure $callback): void
     {
         $this->groupStack[] = ['prefix' => rtrim($prefix, '/'), 'middleware' => $middleware];
-        $callback($this);
+        $callback(...($this->callbackUsesRouter($callback) ? [$this] : []));
         array_pop($this->groupStack);
     }
 
@@ -53,7 +53,16 @@ final class Router
         }
 
         $uri = '/'.trim($prefix.'/'.trim($uri, '/'), '/');
-        $route = new RouteDefinition(strtoupper($method), $uri === '//' ? '/' : $uri, $handler, array_merge($groupMiddleware, $middleware));
+        $method = strtoupper($method);
+        $uri = $uri === '//' ? '/' : $uri;
+
+        foreach ($this->routes as $registeredRoute) {
+            if ($registeredRoute->method === $method && $registeredRoute->uri === $uri) {
+                throw new \RuntimeException(sprintf('Route [%s %s] is already registered.', $method, $uri));
+            }
+        }
+
+        $route = new RouteDefinition($method, $uri, $handler, array_merge($groupMiddleware, $middleware));
         $this->routes[] = $route;
 
         return $route;
@@ -96,9 +105,7 @@ final class Router
     private function runRoute(RouteDefinition $route, Request $request): Response
     {
         $core = function (Request $request) use ($route): Response {
-            $response = is_callable($route->handler)
-                ? call_user_func($route->handler, $request)
-                : null;
+            $response = $this->resolveHandler($route->handler, $request);
 
             if (! $response instanceof Response) {
                 $response = Response::json($response);
@@ -122,6 +129,35 @@ final class Router
         );
 
         return $pipeline($request);
+    }
+
+    private function callbackUsesRouter(Closure $callback): bool
+    {
+        return (new \ReflectionFunction($callback))->getNumberOfParameters() > 0;
+    }
+
+    private function resolveHandler(mixed $handler, Request $request): mixed
+    {
+        if (is_array($handler) && count($handler) === 2) {
+            [$className, $methodName] = $handler;
+
+            if (! is_string($className) || ! class_exists($className)) {
+                throw new \RuntimeException(sprintf('Controller class [%s] not found.', is_string($className) ? $className : get_debug_type($className)));
+            }
+
+            if (! is_string($methodName) || ! method_exists($className, $methodName)) {
+                $method = is_string($methodName) ? $methodName : get_debug_type($methodName);
+                throw new \RuntimeException(sprintf('Method [%s] not found in [%s].', $method, $className));
+            }
+
+            return (new $className())->$methodName($request);
+        }
+
+        if (is_callable($handler)) {
+            return call_user_func($handler, $request);
+        }
+
+        return null;
     }
 
     private function matchRoute(string $routeUri, string $requestUri): ?array

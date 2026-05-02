@@ -12,9 +12,11 @@ Valhalla supports JWT bearer auth and API tokens.
 
 ```php
 use Valhalla\Framework\Auth\Auth;
+use Valhalla\Framework\Core\Response;
+use Valhalla\Framework\Facades\Route;
 use Valhalla\Framework\Middleware\AuthMiddleware;
 
-$router->get('/secure', fn () => Response::json([
+Route::get('/secure', fn () => Response::json([
     'authenticated' => true,
     'user' => Auth::user(),
 ]), [AuthMiddleware::class]);

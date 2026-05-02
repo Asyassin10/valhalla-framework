@@ -20,11 +20,9 @@ use Valhalla\Framework\Core\Response;
 
 final class {$class}
 {
-    public function __invoke(Request \$request): Response
+    public function index(Request \$request): Response
     {
-        return Response::json([
-            'message' => '{$class} responding from Valhalla.',
-        ]);
+        return Response::json(['message' => 'ok']);
     }
 }
 PHP;
@@ -79,16 +77,19 @@ PHP;
 
 declare(strict_types=1);
 
+/** @var \Valhalla\Framework\Core\Router $router */
+
 use App\Controllers\HealthController;
 use Valhalla\Framework\Auth\Auth;
-use Valhalla\Framework\Middleware\AuthMiddleware;
 use Valhalla\Framework\Core\Response;
+use Valhalla\Framework\Facades\Route;
+use Valhalla\Framework\Middleware\AuthMiddleware;
 
-$router->get('/health', new HealthController());
-$router->get('/token', fn () => Response::json([
+Route::get('/health', [HealthController::class, 'index']);
+Route::get('/token', fn () => Response::json([
     'token' => Auth::generateToken(['id' => 1, 'name' => 'Demo Service']),
 ]));
-$router->get('/secure', fn () => Response::json([
+Route::get('/secure', fn () => Response::json([
     'authenticated' => true,
     'user' => Auth::user(),
 ]), [AuthMiddleware::class]);
@@ -126,7 +127,7 @@ use Valhalla\Framework\Core\Response;
 
 final class HealthController
 {
-    public function __invoke(Request \$request): Response
+    public function index(Request \$request): Response
     {
         return Response::json([
             'service' => 'basic-service',
@@ -165,7 +166,7 @@ JSON;
 
     public static function envExample(): string
     {
-        return "APP_ENV=local\nAPP_DEBUG=true\nVALHALLA_JWT_SECRET=change-me\nVALHALLA_API_TOKEN=local-service-token\n";
+        return "APP_ENV=local\nAPP_DEBUG=true\nVALHALLA_JWT_SECRET=change-me\nVALHALLA_API_TOKEN=local-service-token\nDB_CONNECTION=mysql\nDB_HOST=127.0.0.1\nDB_PORT=3306\nDB_DATABASE=valhalla\nDB_USERNAME=valhalla\nDB_PASSWORD=secret\nREDIS_HOST=127.0.0.1\n";
     }
 
     public static function projectAuthConfig(): string
@@ -215,6 +216,41 @@ return [
 PHP;
     }
 
+    public static function projectDatabaseConfig(): string
+    {
+        return <<<'PHP'
+<?php
+
+declare(strict_types=1);
+
+return [
+    'default' => env('DB_CONNECTION', 'mysql'),
+    'debug' => (bool) env('APP_DEBUG', true),
+    'connections' => [
+        'mysql' => [
+            'driver' => 'mysql',
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => (int) env('DB_PORT', 3306),
+            'database' => env('DB_DATABASE', 'valhalla'),
+            'username' => env('DB_USERNAME', 'valhalla'),
+            'password' => env('DB_PASSWORD', 'secret'),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+        ],
+        'postgres' => [
+            'driver' => 'pdo_pgsql',
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => (int) env('DB_PORT', 5432),
+            'database' => env('DB_DATABASE', 'valhalla'),
+            'username' => env('DB_USERNAME', 'valhalla'),
+            'password' => env('DB_PASSWORD', 'secret'),
+            'charset' => 'utf8',
+        ],
+    ],
+];
+PHP;
+    }
+
     public static function projectLoggingConfig(): string
     {
         return <<<'PHP'
@@ -223,9 +259,10 @@ PHP;
 declare(strict_types=1);
 
 return [
+    'driver' => 'single',
     'channel' => 'application',
-    'path' => storage_path('logs/application.log'),
-    'level' => 'debug',
+    'path' => storage_path('logs'),
+    'level' => 'DEBUG',
 ];
 PHP;
     }
