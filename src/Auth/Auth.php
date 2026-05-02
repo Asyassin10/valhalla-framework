@@ -17,7 +17,7 @@ final class Auth
 
     public static function manager(): AuthManager
     {
-        if (!self::$manager instanceof AuthManager) {
+        if (! self::$manager instanceof AuthManager) {
             throw new \RuntimeException('Auth manager has not been configured.');
         }
 

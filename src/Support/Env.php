@@ -10,11 +10,12 @@ final class Env
 
     public static function load(string $basePath, string $file = '.env'): void
     {
-        $path = rtrim($basePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $file;
+        $path = rtrim($basePath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$file;
         Paths::setBasePath($basePath);
 
-        if (self::$loaded || !is_file($path)) {
+        if (self::$loaded || ! is_file($path)) {
             self::$loaded = true;
+
             return;
         }
 
@@ -23,7 +24,7 @@ final class Env
         foreach ($lines as $line) {
             $line = trim($line);
 
-            if ($line === '' || str_starts_with($line, '#') || !str_contains($line, '=')) {
+            if ($line === '' || str_starts_with($line, '#') || ! str_contains($line, '=')) {
                 continue;
             }
 
@@ -52,7 +53,7 @@ final class Env
             'true' => true,
             'false' => false,
             'null' => null,
-            default => is_numeric($value) && !preg_match('/^0\d+$/', (string) $value)
+            default => is_numeric($value) && ! preg_match('/^0\d+$/', (string) $value)
                 ? ((string) (int) $value === (string) $value ? (int) $value : (float) $value)
                 : $value,
         };

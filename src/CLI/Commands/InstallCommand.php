@@ -25,6 +25,7 @@ final class InstallCommand implements Command
         $command = sprintf('cd %s && composer install', escapeshellarg($context->workingPath()));
         passthru($command, $exitCode);
         $console->line($exitCode === 0 ? 'Dependencies installed.' : 'Composer install failed.');
+
         return $exitCode;
     }
 }

@@ -24,10 +24,11 @@ final class RoutesListCommand implements Command
     public function handle(array $arguments, Console $console, Context $context): int
     {
         $app = new Application($context->workingPath());
-        $routesFile = $context->workingPath() . '/routes/api.php';
+        $routesFile = $context->workingPath().'/routes/api.php';
 
-        if (!is_file($routesFile)) {
+        if (! is_file($routesFile)) {
             $console->error('No routes/api.php file found.');
+
             return 1;
         }
 

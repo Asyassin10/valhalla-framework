@@ -19,7 +19,7 @@ final class AgentServer
     {
         $server = @stream_socket_server(sprintf('tcp://%s:%d', $this->host, $this->port), $errno, $errstr);
 
-        if (!is_resource($server)) {
+        if (! is_resource($server)) {
             throw new RuntimeException(sprintf('Unable to start agent server: %s', $errstr ?: $errno));
         }
 
@@ -27,12 +27,13 @@ final class AgentServer
             $payload = trim((string) fgets($connection));
             $request = json_decode($payload, true);
 
-            if (!is_array($request)) {
+            if (! is_array($request)) {
                 fwrite($connection, json_encode([
                     'status' => 'error',
                     'error' => 'Invalid JSON payload.',
-                ]) . PHP_EOL);
+                ]).PHP_EOL);
                 fclose($connection);
+
                 continue;
             }
 
@@ -53,7 +54,7 @@ final class AgentServer
                 ];
             }
 
-            fwrite($connection, json_encode($response, JSON_UNESCAPED_SLASHES) . PHP_EOL);
+            fwrite($connection, json_encode($response, JSON_UNESCAPED_SLASHES).PHP_EOL);
             fclose($connection);
         }
     }

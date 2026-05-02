@@ -6,7 +6,7 @@ namespace Valhalla\Framework\Core;
 
 use Throwable;
 use Valhalla\Framework\Core\Exceptions\HttpException;
-use Valhalla\Framework\Support\Logger;
+use Valhalla\Framework\Log\Logger;
 
 final class ErrorHandler
 {
@@ -19,16 +19,13 @@ final class ErrorHandler
     public function render(Throwable $throwable): Response
     {
         $status = $throwable instanceof HttpException ? $throwable->statusCode() : 500;
-
-        $this->logger->error($throwable->getMessage(), [
-            'exception' => $throwable::class,
-            'trace' => $this->debug ? $throwable->getTraceAsString() : null,
-        ]);
-
+        $this->logger->logError($throwable);
         $payload = [
             'error' => [
                 'message' => $throwable->getMessage(),
                 'type' => $throwable::class,
+                'file' => $throwable->getFile(),
+                'line' => $throwable->getLine(),
             ],
         ];
 

@@ -29,6 +29,7 @@ final class AgentCallCommand implements Command
 
         if ($name === null || $task === null) {
             $console->error('Usage: valhalla agent:call NAME TASK');
+
             return 1;
         }
 
@@ -37,12 +38,14 @@ final class AgentCallCommand implements Command
 
         if ($agent === null) {
             $console->error(sprintf('Agent [%s] is not installed.', $name));
+
             return 1;
         }
 
         $client = new AgentClient();
         $response = $client->call((string) $agent['host'], (int) $agent['port'], $task, ['source' => 'cli']);
         $console->line(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: '{}');
+
         return 0;
     }
 }

@@ -8,11 +8,11 @@ final class AgentRegistry
 {
     public function __construct(private readonly string $path)
     {
-        if (!is_dir(dirname($path))) {
+        if (! is_dir(dirname($path))) {
             mkdir(dirname($path), 0777, true);
         }
 
-        if (!is_file($path)) {
+        if (! is_file($path)) {
             file_put_contents($path, json_encode([], JSON_PRETTY_PRINT));
         }
     }
