@@ -24,6 +24,8 @@ final class ErrorHandler
             'error' => [
                 'message' => $throwable->getMessage(),
                 'type' => $throwable::class,
+                'file' => $throwable->getFile(),
+                'line' => $throwable->getLine(),
             ],
         ];
 
