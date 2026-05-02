@@ -6,9 +6,8 @@ class ValidationResponse
 {
     public function __construct(
         private array $errors,
-        private bool $valid
-    ) {
-    }
+        private bool $valid,
+    ) {}
 
     public function getIsValid(): bool
     {
@@ -20,10 +19,8 @@ class ValidationResponse
         return $this->errors;
     }
 
-    public function faills(): bool
+    public function fails(): bool
     {
-        return $this->valid === true ? true : false;
+        return !$this->valid;
     }
-
-
 }
