@@ -259,10 +259,14 @@ PHP;
 declare(strict_types=1);
 
 return [
-    'driver' => 'single',
-    'channel' => 'application',
-    'path' => storage_path('logs'),
-    'level' => 'DEBUG',
+    'driver'   => (string) env('LOG_DRIVER', "single"),
+    'level'   => (string) env('LOG_LEVEL', "INFO"),
+    'path'    => storage_path('logs'),
+    "channels" => [
+        "appChannel" => [
+            'driver'   => "single"
+        ]
+    ]
 ];
 PHP;
     }

@@ -36,7 +36,8 @@ final class RoutesListCommand implements Command
 
         foreach ($app->router()->routes() as $route) {
             $handler = $this->formatHandler($route->handler);
-            $console->line($handler === null
+            $console->line(
+                $handler === null
                 ? sprintf('%-6s %s', $route->method, $route->uri)
                 : sprintf('%-6s %s %s', $route->method, $route->uri, $handler)
             );

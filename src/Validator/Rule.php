@@ -1,23 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Valhalla\Framework\Validator;
 
-class Rule
+final class Rule
 {
-    public static function required(mixed $value): bool
-    {
-        return ! is_null($value) && $value !== '';
-    }
+    public function __construct(
+        public readonly string $name,
+        public readonly array $rawParams = [],
+    ) {}
 
-    public static function string(mixed $value): bool
+    public static function fromString(string $rule): self
     {
-        return is_string($value);
-    }
-    public static function email(string $email): bool
-    {
-        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return true;
+        if (!str_contains($rule, ':')) {
+            return new self($rule);
         }
-        return false;
+
+        [$name, $paramString] = explode(':', $rule, 2);
+
+        return new self($name, explode(',', $paramString));
     }
 }

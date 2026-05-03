@@ -4,78 +4,68 @@ declare(strict_types=1);
 
 namespace Valhalla\Framework\Validator;
 
-use InvalidArgumentException;
 use Valhalla\Framework\Validator\Response\ValidationResponse;
 use Valhalla\Framework\Validator\Response\ValidationRowResponse;
 
 class Validator
 {
-    /**
-     * @var ValidationRowResponse[]
-     */
-    private array $responses;
-    private ValidationResponse $validationResponse;
-
+    /** @var ValidationRowResponse[] */
+    private array $responses = [];
 
     private function __construct(
-        private array $rules,
-        private array $data
-    ) {
-    }
+        private readonly array $rules,
+        private readonly array $data,
+    ) {}
 
     public static function make(array $data, array $rules): ValidationResponse
     {
         return (new self($rules, $data))->validate();
     }
-    public function validate(): ValidationResponse
+
+    private function validate(): ValidationResponse
     {
-        foreach ($this->rules as $field => $rules_row) {
-            $pipe_valid = $this->validatePipeline($field, $rules_row, $this->data[$field]);
-            $this->responses[] = $pipe_valid;
+        foreach ($this->rules as $field => $fieldRules) {
+            $value = $this->data[$field] ?? null;
+            $this->responses[] = $this->validateField($field, $fieldRules, $value);
         }
-        $this->validationResponse =  $this->processResponse();
-        return $this->validationResponse;
+
+        return $this->buildResponse();
     }
-    public function validatePipeline(mixed $field, array $rules, mixed $value): ValidationRowResponse
+
+    private function validateField(string $field, array $fieldRules, mixed $value): ValidationRowResponse
     {
         $errors = [];
-        $valid = true;
-        foreach ($rules as $rule) {
-            $res = match ($rule) {
-                'required' => Rule::required($value),
-                'string' => Rule::string($value),
-                'email' => Rule::email((string) $value),
-                default => throw new InvalidArgumentException("Unknown rule: {$rule}")
-            };
-            if (!$res) {
-                $valid = false;
+
+        foreach ($fieldRules as $ruleInput) {
+            $rule = Rule::fromString($ruleInput);
+            [$class, $params] = RuleRegistrar::resolve($rule);
+
+            if (!$class::validate($value, $params)) {
                 $errors[$field][] = sprintf(
-                    'The %s field failed the %s rule and value %s.',
+                    'The %s field failed the %s rule.',
                     $field,
-                    $rule,
-                    $value
+                    $rule->name,
                 );
             }
         }
 
-        return new ValidationRowResponse($valid, $errors);
-
+        return new ValidationRowResponse(empty($errors), $errors);
     }
 
-
-
-
-
-    private function processResponse(): ValidationResponse
+    private function buildResponse(): ValidationResponse
     {
-        $valid = true;
         $errors = [];
-        foreach ($this->responses as $response) {
-            if ($response->getIsValid() == false) {
+        $valid = true;
+
+        foreach ($this->responses as $row) {
+            if (!$row->getIsValid()) {
                 $valid = false;
             }
-            $errors[] = $response->getErrors();
+            if ($row->getErrors()) {
+                $errors[] = $row->getErrors();
+            }
         }
+
         return new ValidationResponse($errors, $valid);
     }
 }
